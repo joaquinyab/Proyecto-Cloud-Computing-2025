@@ -176,12 +176,8 @@ lifecycle {
   create_before_destroy = true 
 }
 
-<img width="1220" height="1387" alt="DIAGRAMA TRIPMATE drawio (2)" src="https://github.com/user-attachments/assets/553e54b6-7d87-42cd-8d2d-1804cd52cae1" />
+<img width="999" height="1061" alt="AWS_Tripmate drawio (1)" src="https://github.com/user-attachments/assets/ba785eaa-bdad-444d-a48d-d0594094081b" />
 
 
-***Nota sobre el diagrama:***
-Por una cuestión de prolijidad, la conexión desde API Gateway hacia las funciones Lambda que se encuentran en las subredes privadas fue representada con una única flecha que apunta a la subnet donde viven tanto la Lambda backend como la Lambda dbinit.
 
-Aunque ambas funciones tienen integraciones independientes con API Gateway, optamos por esta simplificación para evitar sobrecargar el diagrama con múltiples líneas que representarían flujos similares. 
 
-De igual manera por prolijidad, fue la conexion de ambas lambdas al nat gateway.

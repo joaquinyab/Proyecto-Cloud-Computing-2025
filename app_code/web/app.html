@@ -1,0 +1,935 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>TripMate · Mis viajes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{--bg:#060a17; --panel:#0b1224; --card:#0f172a; --ink:#e5e7eb; --muted:#9fb0c9; --line:#1d2a42; --primary:#22c55e; --primary-2:#16a34a}
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#060a17,#0b1021);color:var(--ink);font-family:system-ui}
+    .shell{max-width:1100px;margin:0 auto;padding:20px}
+    .nav{display:flex;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 16px;margin:14px 0}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800}
+    .pill{display:inline-flex;align-items:center;gap:8px;background:#0d1b33;border:1px solid #223456;color:#a7b5cc;padding:6px 10px;border-radius:999px;font-size:13px}
+    .btn{display:inline-flex;align-items:center;gap:8px;background:var(--primary);border:none;color:#06210f;padding:10px 14px;border-radius:12px;font-weight:800;cursor:pointer}
+    .btn:hover{background:var(--primary-2)}
+    .btn.ghost{background:#132033;color:#d3dded;border:1px solid var(--line)}
+    .btn.pago{background:#2563eb;color:#fff;font-size:13px;padding:6px 10px}
+    .btn.pago:hover{background:#1d4ed8}
+    .btn.pago.pagado{background:#059669;cursor:default}
+    .btn.pago.pagado:hover{background:#059669}
+    .grid{display:grid;grid-template-columns:1fr;gap:18px}
+    @media(min-width:900px){ .grid{grid-template-columns:1.2fr 1fr} }
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 14px 50px #0006}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    input, .in{flex:1;min-width:180px;background:#0b1429;border:1px solid #223456;border-radius:12px;padding:12px;color:var(--ink)}
+    label{font-size:12px;color:#9fb0c9;margin-bottom:6px;display:block}
+    .field{display:flex;flex-direction:column;min-width:160px}
+    table{width:100%;border-collapse:collapse}
+    thead th{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#bcd;background:#0c1429}
+    th,td{border-bottom:1px solid var(--line);padding:14px 10px;text-align:left}
+    tbody tr:hover{background:#0d152a}
+    .empty{display:grid;place-items:center;padding:30px 10px;color:var(--muted)}
+    .toast{position:fixed;top:18px;right:18px;background:#0f1d33;color:#e7f7ff;border:1px solid #204066;padding:10px 14px;border-radius:12px;box-shadow:0 10px 30px #0007;display:none;max-width:360px}
+    .toast.ok{border-color:#0a6b3a;background:#0d1f17;color:#d8ffea}
+    .toast.err{border-color:#6b1010;background:#1f1010;color:#ffd8d8}
+    .sectionTitle{display:flex;align-items:center;justify-content:space-between;margin:6px 0 12px}
+    .subtle{color:#9fb0c9;font-size:13px}
+    .tag{display:inline-block;background:#0d1b33;border:1px solid #223456;border-radius:999px;padding:4px 8px;font-size:12px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .mini{font-size:12px;color:#9fb0c9}
+    .danger{background:#3a0d0d;border:1px solid #5b1a1a;color:#ffd8d8}
+    .iconbtn{background:transparent;border:1px solid #2a3a5a;border-radius:10px;padding:6px 8px;color:#cfd8ea;cursor:pointer}
+    .iconbtn:hover{background:#112244}
+    .price-info{display:flex;flex-direction:column;gap:4px}
+    .price-split{font-size:11px;color:#6b7280;font-weight:normal}
+    .progress-bar{width:100%;height:6px;background:#1e293b;border-radius:3px;overflow:hidden;margin-top:4px}
+    .progress-fill{height:100%;background:linear-gradient(90deg,#059669,#10b981);transition:width 0.3s}
+    .saldo-pos{color:#f97316;font-weight:600}
+    .saldo-neg{color:#22c55e;font-weight:600}
+    .saldo-ok{color:#e5e7eb;font-weight:600}
+
+    /* Checklist */
+    .todo-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+    .todo-item{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
+    .todo-item label{display:flex;align-items:center;gap:8px;cursor:pointer}
+    .todo-item input[type="checkbox"]{width:16px;height:16px}
+    .todo-done{text-decoration:line-through;color:#6b7280}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="nav">
+      <div class="brand">
+        <svg width="24" height="24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7v2H3l2.3 9.2A2 2 0 0 0 7.3 21h9.4a2 2 0 0 0 2-1.8L21 11h-2V9a7 7 0 0 0-7-7Zm5 9-1.6 8H8.6L7 11h10Zm-8-2a3 3 0 1 1 6 0v2H9V9Z"/></svg>
+        TripMate
+        <span id="userPill" class="pill">No autenticado</span>
+      </div>
+      <div class="row">
+        <button id="btnListar" class="btn ghost">Listar viajes</button>
+        <button id="btnLogout" class="btn ghost">Salir</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Nuevo viaje</h3>
+        <div class="row">
+          <div class="field" style="flex:2">
+            <label>Nombre</label>
+            <input id="nombre" placeholder="Ej: Escapada a Bariloche" />
+          </div>
+          <div class="field">
+            <label>Desde</label>
+            <input id="vDesde" type="date" />
+          </div>
+          <div class="field">
+            <label>Hasta</label>
+            <input id="vHasta" type="date" />
+          </div>
+          <!-- 💰 Presupuesto total (opcional) -->
+          <div class="field">
+            <label>Presupuesto total (opcional)</label>
+            <input id="vPresupuesto" type="number" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <button id="btnGuardar" class="btn">Guardar</button>
+        </div>
+        <div id="nuevoCodigo" class="subtle" style="margin-top:8px;display:none">
+          Código de acceso: <span class="mono tag" id="nuevoCodigoVal"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Unirse a un viaje</h3>
+        <div class="row">
+          <input id="joinCode" class="mono" placeholder="Código (p.ej. 7K3QZF)" />
+          <button id="btnUnirse" class="btn">Unirse</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle">
+          <h3>Mis viajes</h3>
+          <span class="subtle">Abrí un viaje para ver/crear actividades</span>
+        </div>
+        <div id="listWrap">
+          <div class="empty" id="empty">No hay viajes todavía. ¡Agregá el primero! ✈️</div>
+          <table id="tabla" style="display:none">
+            <thead>
+              <tr>
+                <th>Nombre</th><th>Fechas</th><th>Código</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="panelActividades" style="margin-top:14px; display:none">
+      <div class="sectionTitle">
+        <h3>Actividades de: <span id="viajeTitulo" class="tag"></span></h3>
+        <span id="viajeInfo" class="subtle"></span>
+      </div>
+
+      <!-- 💰 Barra de presupuesto del viaje -->
+      <div id="viajeBudget" class="mini" style="margin:4px 0 10px; display:none">
+        Presupuesto del viaje:
+        $ <span id="presuTotal">0.00</span> ·
+        Usado en actividades:
+        $ <span id="presuUsado">0.00</span> ·
+        Restante:
+        $ <span id="presuRestante">0.00</span>
+      </div>
+
+      <div class="row" style="margin-bottom:10px">
+        <div class="field" style="flex:2">
+          <label>Actividad</label>
+          <input id="actNombre" placeholder="Ej: Circuito cervecero" />
+        </div>
+        <div class="field">
+          <label>Precio total</label>
+          <input id="actPrecio" type="number" min="0" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="field">
+          <label>Desde</label>
+          <input id="aDesde" type="date" />
+        </div>
+        <div class="field">
+          <label>Hasta</label>
+          <input id="aHasta" type="date" />
+        </div>
+        <button id="btnCrearAct" class="btn">Agregar actividad</button>
+      </div>
+
+      <div id="actListWrap">
+        <div class="empty" id="actEmpty">Todavía no hay actividades.</div>
+        <table id="actTabla" style="display:none">
+          <thead><tr><th>Actividad</th><th>Fechas</th><th>Precio</th><th>👍</th><th>👎</th><th>Votaron</th><th></th></tr></thead>
+          <tbody id="actBody"></tbody>
+        </table>
+      </div>
+
+      <!-- ===================== RESUMEN POR PERSONA ===================== -->
+      <div id="resumenSection" style="margin-top:24px;border-top:1px solid var(--line);padding-top:14px">
+        <div class="sectionTitle">
+          <h3>Resumen por persona</h3>
+          <span class="subtle">Quién debe cuánto en este viaje</span>
+        </div>
+        <div id="resumenWrap">
+          <div class="empty" id="resumenEmpty">
+            Todavía no hay deudas calculadas.
+          </div>
+          <table id="resumenTabla" style="display:none">
+            <thead>
+              <tr>
+                <th>Persona (email)</th>
+                <th>Debe pagar</th>
+                <th>Marcó pagado</th>
+                <th>Saldo</th>
+              </tr>
+            </thead>
+            <tbody id="resumenBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================== TODO LIST DEL VIAJE (DB) ===================== -->
+      <div id="todoSection" style="margin-top:24px;border-top:1px solid var(--line);padding-top:14px">
+        <div class="sectionTitle">
+          <h3>Cosas a hacer del viaje</h3>
+          <span class="subtle">Checklist compartido del viaje </span>
+        </div>
+
+        <div class="row" style="margin-bottom:10px">
+          <div class="field" style="flex:1">
+            <label>Nueva tarea</label>
+            <input id="todoInput" placeholder="Ej: Reservar alojamiento, comprar pasajes..." />
+          </div>
+          <button id="btnAddTodo" class="btn">Agregar</button>
+        </div>
+
+        <div id="todoWrap">
+          <div class="empty" id="todoEmpty">No hay tareas todavía. Agregá la primera ✅</div>
+          <ul id="todoList" class="todo-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+<script>
+  // ⛳️ Variables y helpers
+  const $ = s => document.querySelector(s);
+  const toast = $('#toast');
+  let idToken = null;
+  let currentViaje = null;
+  let totalMiembrosViaje = 1;
+  let todos = []; // checklist del viaje (desde backend)
+
+  function showToast(msg, type='ok'){
+    toast.textContent=msg;
+    toast.className='toast '+(type==='ok'?'ok':'err');
+    toast.style.display='block';
+    clearTimeout(showToast._t);
+    showToast._t=setTimeout(()=>toast.style.display='none',3000);
+  }
+  function setUserPill(text, good=true){
+    const pill = $('#userPill');
+    pill.textContent=text;
+    pill.style.borderColor=good?'#1d6f45':'#5b2b2b';
+    pill.style.background=good?'#0d2219':'#221010';
+    pill.style.color=good?'#d8ffea':'#ffd8d8';
+  }
+  function decodeJwt(t){
+    try{
+      const p=t.split('.')[1];
+      const j=atob(p.replace(/-/g,'+').replace(/_/g,'/'));
+      return JSON.parse(decodeURIComponent(escape(j)));
+    }catch{
+      return {};
+    }
+  }
+  function escapeHtml(s){
+    return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  }
+  function authHeaders(){
+    const h={'Content-Type':'application/json'};
+    if(idToken) h['Authorization']='Bearer '+idToken;
+    return h;
+  }
+
+  // 🚫 Sin Date ni timezones: solo reordenamos el string YYYY-MM-DD a DD/MM/YYYY
+  function formatDate(iso) {
+    if (!iso) return '—';
+    const s = String(iso);
+    const datePart = s.includes('T') ? s.split('T')[0] : s;
+    const [y,m,d] = datePart.split('-');
+    if (!y || !m || !d) return s;
+    return `${d}/${m}/${y}`;
+  }
+
+  function getCurrentUserEmail() {
+    if (!idToken) return null;
+    const c = decodeJwt(idToken);
+    const e = c.email || c['cognito:username'] || null;
+    return e ? String(e).toLowerCase() : null;
+  }
+
+  // 💰 Actualizar barra de presupuesto del viaje
+  function updateBudgetUI(actsArray) {
+    const box = $('#viajeBudget');
+    if (!currentViaje) {
+      box.style.display = 'none';
+      return;
+    }
+
+    let totalPresu = Number(currentViaje.presupuesto_total || 0);
+    if (!Number.isFinite(totalPresu) || totalPresu <= 0) {
+      box.style.display = 'none';
+      return;
+    }
+
+    const actividades = Array.isArray(actsArray) ? actsArray : [];
+    const totalUsado = actividades.reduce(
+      (s, a) => s + Number(a.precio || 0),
+      0
+    );
+    const restante = Number((totalPresu - totalUsado).toFixed(2));
+
+    $('#presuTotal').textContent    = totalPresu.toFixed(2);
+    $('#presuUsado').textContent    = totalUsado.toFixed(2);
+    $('#presuRestante').textContent = restante.toFixed(2);
+
+    const presuRestanteEl = $('#presuRestante');
+    if (restante < 0) {
+      presuRestanteEl.style.color = '#f97316';
+    } else {
+      presuRestanteEl.style.color = '#d8ffea';
+    }
+
+    box.style.display = 'block';
+  }
+
+  // 🧮 Resumen por persona
+  async function cargarResumenViaje() {
+    if (!currentViaje) return;
+
+    const { status, data } = await fetchJSON(
+      `${window.API_BASE}/viajes/${currentViaje.id}/resumen`,
+      { headers: authHeaders() }
+    );
+
+    const empty  = document.getElementById('resumenEmpty');
+    const tabla  = document.getElementById('resumenTabla');
+    const tbody  = document.getElementById('resumenBody');
+
+    if (status !== 200 || !data || !Array.isArray(data.resumen)) {
+      tabla.style.display = 'none';
+      empty.textContent   = 'No se pudo calcular el resumen.';
+      empty.style.display = 'grid';
+      return;
+    }
+
+    const rows = data.resumen;
+
+    const allZero = !rows.length || rows.every(r =>
+      Number(r.debe || 0) === 0 && Number(r.pago || 0) === 0
+    );
+
+    if (allZero) {
+      tabla.style.display = 'none';
+      empty.textContent   = 'Todavía no hay deudas calculadas.';
+      empty.style.display = 'grid';
+      return;
+    }
+
+    empty.style.display = 'none';
+    tabla.style.display = 'table';
+    tbody.innerHTML = '';
+
+    rows.forEach(r => {
+      const debe  = Number(r.debe || 0);
+      const pago  = Number(r.pago || 0);
+      const saldo = Number(r.saldo || (debe - pago));
+      const cls   = saldo > 0 ? 'saldo-pos' : (saldo < 0 ? 'saldo-neg' : 'saldo-ok');
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(r.user_email)}</td>
+        <td>$ ${debe.toFixed(2)}</td>
+        <td>$ ${pago.toFixed(2)}</td>
+        <td><span class="${cls}">$ ${saldo.toFixed(2)}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ===== Checklist (TODOs) contra backend =====
+  function todosEndpoint() {
+    if (!currentViaje) return null;
+    return `${window.API_BASE}/viajes/${currentViaje.id}/todos`;
+  }
+
+  async function cargarTodos() {
+    const panel = document.getElementById('todoSection');
+    if (!currentViaje) {
+      todos = [];
+      if (panel) panel.style.display = 'none';
+      return;
+    }
+    if (panel) panel.style.display = 'block';
+
+    const url = todosEndpoint();
+    if (!url) return;
+
+    const { status, data } = await fetchJSON(url, { headers: authHeaders() });
+    if (status === 200 && data && Array.isArray(data.todos)) {
+      todos = data.todos;
+    } else {
+      todos = [];
+    }
+    renderTodos();
+  }
+
+  function renderTodos() {
+    const empty = document.getElementById('todoEmpty');
+    const list  = document.getElementById('todoList');
+    if (!empty || !list) return;
+
+    list.innerHTML = '';
+
+    if (!currentViaje) {
+      empty.style.display = 'grid';
+      return;
+    }
+
+    if (!todos.length) {
+      empty.style.display = 'grid';
+      return;
+    }
+
+    empty.style.display = 'none';
+
+    todos.forEach(t => {
+      const done = Number(t.done) === 1 || t.done === true;
+      const li = document.createElement('li');
+      li.className = 'todo-item';
+      li.innerHTML = `
+        <label>
+          <input type="checkbox" data-todo-id="${t.id}" ${done ? 'checked' : ''} />
+          <span class="${done ? 'todo-done' : ''}">${escapeHtml(t.text)}</span>
+        </label>
+        <button class="iconbtn danger" data-del-todo="${t.id}">✖</button>
+      `;
+      list.appendChild(li);
+    });
+
+    list.querySelectorAll('input[data-todo-id]').forEach(input => {
+      input.onchange = async () => {
+        const id = input.getAttribute('data-todo-id');
+        const done = input.checked;
+        await toggleTodo(id, done);
+      };
+    });
+
+    list.querySelectorAll('button[data-del-todo]').forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.getAttribute('data-del-todo');
+        await borrarTodo(id);
+      };
+    });
+  }
+
+  async function agregarTodo() {
+    if (!currentViaje) return;
+    const input = document.getElementById('todoInput');
+    if (!input) return;
+
+    const text = (input.value || '').trim();
+    if (!text) {
+      showToast('Escribí una tarea antes de agregar', 'err');
+      input.focus();
+      return;
+    }
+
+    const url = todosEndpoint();
+    const { status, data } = await fetchJSON(url, {
+      method:'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ text })
+    });
+
+    if (status === 200 && data?.ok) {
+      input.value = '';
+      await cargarTodos();
+      showToast('Tarea agregada ✅');
+    } else {
+      showToast((data && data.error) || 'No se pudo agregar la tarea', 'err');
+    }
+  }
+
+  async function toggleTodo(id, done) {
+    if (!currentViaje || !id) return;
+    const url = todosEndpoint();
+    const { status, data } = await fetchJSON(url, {
+      method:'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ toggle_id: Number(id), done: done ? 1 : 0 })
+    });
+    if (status === 200 && data?.ok) {
+      await cargarTodos();
+    } else {
+      showToast((data && data.error) || 'No se pudo actualizar la tarea', 'err');
+    }
+  }
+
+  async function borrarTodo(id) {
+    if (!currentViaje || !id) return;
+    const url = todosEndpoint();
+    const { status, data } = await fetchJSON(url, {
+      method:'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ delete_id: Number(id) })
+    });
+    if (status === 200 && data?.ok) {
+      await cargarTodos();
+    } else {
+      showToast((data && data.error) || 'No se pudo borrar la tarea', 'err');
+    }
+  }
+
+  // ⛳️ Cargar tokens del fragment
+  (function readFragment(){
+    const h = location.hash.startsWith('#') ? location.hash.slice(1) : '';
+    if (!h) return;
+    const p = new URLSearchParams(h);
+    const idt = p.get('id_token'); const at = p.get('access_token');
+    if (idt) localStorage.setItem('idToken', idt);
+    if (at)  localStorage.setItem('accessToken', at);
+    history.replaceState({}, '', location.pathname);
+  })();
+
+  idToken = localStorage.getItem('idToken');
+  if (idToken){
+    const c = decodeJwt(idToken);
+    setUserPill(c.email || c['cognito:username'] || 'Autenticado', true);
+  } else {
+    setUserPill('No autenticado', false);
+  }
+
+  // ⛳️ Fetch JSON con compatibilidad API Gateway
+  async function fetchJSON(url, opts={}) {
+    const r=await fetch(url, opts);
+    const t=await r.text();
+    let data=t;
+    try{
+      const obj=JSON.parse(t);
+      data=('body' in obj)? JSON.parse(obj.body): obj;
+    }catch{}
+    return { status:r.status, data };
+  }
+
+  // ⛳️ Listar viajes
+  async function listar(){
+    const { status, data } = await fetchJSON(`${window.API_BASE}/listar`, { headers: authHeaders() });
+    if (status===200){
+      const rows = Array.isArray(data)? data : [];
+      const tbody = $('#tbody');
+      if (!rows.length){
+        $('#tabla').style.display='none';
+        $('#empty').style.display='grid';
+        return;
+      }
+      $('#tabla').style.display='table';
+      $('#empty').style.display='none';
+      tbody.innerHTML='';
+
+      rows.forEach(r=>{
+        const tr=document.createElement('tr');
+        const presupuesto = (r.presupuesto_total != null) ? Number(r.presupuesto_total) : null;
+        tr.innerHTML = `
+          <td>
+            <div style="display:flex;gap:10px;align-items:center">
+              <strong>${escapeHtml(r.nombre)}</strong>
+            </div>
+            <div class="mini">Owner: ${escapeHtml(r.owner||'—')}</div>
+          </td>
+          <td class="mini">${formatDate(r.fecha_inicio)} → ${formatDate(r.fecha_fin)}</td>
+          <td><span class="mono tag">${escapeHtml(r.access_code || '—')}</span></td>
+          <td style="display:flex;gap:8px">
+            <button class="btn ghost"
+              data-open="${r.id}"
+              data-name="${escapeHtml(r.nombre)}"
+              data-fi="${r.fecha_inicio||''}"
+              data-ff="${r.fecha_fin||''}"
+              data-presu="${presupuesto != null && Number.isFinite(presupuesto) ? presupuesto : ''}"
+            >Abrir</button>
+            <button class="iconbtn danger" title="Eliminar viaje" data-del="${r.id}">✖</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll('[data-open]').forEach(btn=>{
+        btn.onclick = () => openViaje(
+          Number(btn.dataset.open),
+          btn.dataset.name,
+          btn.dataset.fi,
+          btn.dataset.ff,
+          btn.dataset.presu || ''
+        );
+      });
+      tbody.querySelectorAll('[data-del]').forEach(btn=>{
+        btn.onclick = () => deleteViaje(Number(btn.dataset.del));
+      });
+      showToast('Listado actualizado');
+    } else showToast('Error al listar', 'err');
+  }
+
+  // ⛳️ Guardar viaje
+  async function guardar(){
+    const nombre = ($('#nombre').value || '').trim();
+    const fi = $('#vDesde').value;
+    const ff = $('#vHasta').value;
+    const presupuestoStr = ($('#vPresupuesto').value || '').trim();
+
+    if (!nombre){ showToast('Ingresá un nombre', 'err'); $('#nombre').focus(); return; }
+    if (!fi || !ff){ showToast('Elegí fechas del viaje', 'err'); return; }
+    if (fi > ff){ showToast('La fecha inicial no puede ser mayor que la final', 'err'); return; }
+
+    let presupuesto_total = null;
+    if (presupuestoStr !== '') {
+      const num = Number(presupuestoStr);
+      if (!Number.isFinite(num) || num < 0) {
+        showToast('Presupuesto inválido', 'err');
+        $('#vPresupuesto').focus();
+        return;
+      }
+      presupuesto_total = num;
+    }
+
+    const payload = {
+      nombre,
+      fecha_inicio: fi,
+      fecha_fin: ff,
+      presupuesto_total
+    };
+
+    const { status, data } = await fetchJSON(`${window.API_BASE}/guardar`, {
+      method:'POST', headers: authHeaders(), body: JSON.stringify(payload)
+    });
+    if (status===200 && data?.ok){
+      showToast('Guardado ✅');
+      $('#nombre').value=''; $('#vDesde').value=''; $('#vHasta').value='';
+      $('#vPresupuesto').value='';
+
+      if (data.access_code){
+        $('#nuevoCodigo').style.display='block';
+        $('#nuevoCodigoVal').textContent = data.access_code;
+      }
+      await listar();
+    } else showToast(data?.error || 'Error al guardar', 'err');
+  }
+
+  // ⛳️ Eliminar viaje
+  async function deleteViaje(id){
+    if (!confirm('¿Eliminar este viaje y sus actividades?')) return;
+    const { status, data } = await fetchJSON(`${window.API_BASE}/guardar`, {
+      method:'POST', headers: authHeaders(), body: JSON.stringify({ delete_viaje: id })
+    });
+    if (status===200 && data?.ok){
+      showToast('Viaje eliminado');
+      await listar();
+    }
+    else showToast(data?.error || 'No se pudo eliminar', 'err');
+  }
+
+  // ⛳️ Unirse por código
+  async function unirse(){
+    const codigo = ($('#joinCode').value || '').trim().toUpperCase();
+    if (!codigo){ showToast('Ingresá un código', 'err'); $('#joinCode').focus(); return; }
+    const { status, data } = await fetchJSON(`${window.API_BASE}/unirse`, {
+      method:'POST', headers: authHeaders(), body: JSON.stringify({ codigo })
+    });
+    if (status===200 && data?.ok){
+      showToast('Te uniste al viaje ✅');
+      $('#joinCode').value='';
+      await listar();
+    } else {
+      showToast(data?.error || 'No se pudo unir', 'err');
+    }
+  }
+
+  // ⛳️ Abrir viaje y cargar actividades
+  function openViaje(id, nombre, fi, ff, presu){
+    const fechaInicio = fi ? String(fi).split('T')[0] : '';
+    const fechaFin = ff ? String(ff).split('T')[0] : '';
+    const presuNum = (presu !== undefined && presu !== '') ? Number(presu) : NaN;
+
+    currentViaje = {
+      id,
+      nombre,
+      fecha_inicio: fechaInicio,
+      fecha_fin: fechaFin,
+      presupuesto_total: Number.isFinite(presuNum) && presuNum > 0 ? presuNum : 0
+    };
+
+    $('#viajeTitulo').textContent = nombre;
+    $('#viajeInfo').textContent = `${formatDate(fechaInicio)} → ${formatDate(fechaFin)}`;
+    $('#panelActividades').style.display='block';
+
+    $('#aDesde').setAttribute('min', fechaInicio || '');
+    $('#aDesde').setAttribute('max', fechaFin || '');
+    $('#aHasta').setAttribute('min', fechaInicio || '');
+    $('#aHasta').setAttribute('max', fechaFin || '');
+
+    updateBudgetUI([]);
+    cargarActividades();
+    cargarTodos(); // 👈 checklist del viaje
+  }
+
+  // ⛳️ Cargar actividades (render + bind)
+  async function cargarActividades(){
+    if (!currentViaje) return;
+    const { status, data } = await fetchJSON(`${window.API_BASE}/viajes/${currentViaje.id}/actividades`, { headers: authHeaders() });
+    if (status!==200) { showToast(data?.error || 'Error al traer actividades', 'err'); return; }
+    
+    const acts = data.actividades || [];
+    const votos = data.votos || [];
+    const pagos = data.pagos || [];
+    totalMiembrosViaje = data.total_miembros || 1;
+
+    const presu = Number(data.presupuesto_total || 0);
+    if (currentViaje && Number.isFinite(presu) && presu > 0) {
+      currentViaje.presupuesto_total = presu;
+    }
+
+    updateBudgetUI(acts);
+
+    const byAct = votos.reduce((m,v)=>{ (m[v.actividad_id]??=[]).push(v); return m; }, {});
+
+    const tbody = $('#actBody');
+    if (!acts.length){
+      $('#actTabla').style.display='none';
+      $('#actEmpty').style.display='grid';
+      tbody.innerHTML='';
+      await cargarResumenViaje();
+      return;
+    }
+    $('#actTabla').style.display='table';
+    $('#actEmpty').style.display='none';
+    tbody.innerHTML='';
+    
+    acts.forEach(a=>{
+      const listEmails = (byAct[a.id]||[]).map(v=>`${escapeHtml(v.user_email)}${v.voto? ' 👍':' 👎'}`).join(', ');
+      const precioTotal = Number(a.precio||0);
+      const precioPorPersona = typeof a.per_persona === 'number' ? a.per_persona : (totalMiembrosViaje > 0 ? (precioTotal / totalMiembrosViaje) : precioTotal);
+      const pagadosCount = typeof a.pagados === 'number' ? a.pagados : 0;
+      const montoRestante = typeof a.restante === 'number' ? a.restante : Math.max(0, precioTotal - (pagadosCount * precioPorPersona));
+      const porcentajePagado = typeof a.porcentaje_pagado === 'number' ? a.porcentaje_pagado : (precioTotal > 0 ? Math.min(100, (pagadosCount * precioPorPersona / precioTotal) * 100) : 0);
+
+      const yaPague = Boolean(a.yo_pagado);
+
+      const tr=document.createElement('tr');
+      tr.dataset.actId = a.id;
+      tr.dataset.precio = String(precioTotal);
+      tr.dataset.perPersona = String(precioPorPersona);
+      tr.dataset.pagados = String(pagadosCount);
+      tr.dataset.totalMiembros = String(totalMiembrosViaje);
+
+      tr.innerHTML = `
+        <td>${escapeHtml(a.nombre)}</td>
+        <td class="mini">${formatDate(a.fecha_inicio)} → ${formatDate(a.fecha_fin)}</td>
+        <td>
+          <div class="price-info">
+            <div><strong class="precio-total">$ ${precioTotal.toFixed(2)}</strong></div>
+            <div class="price-split">Por persona: $ <span class="per-persona">${precioPorPersona.toFixed(2)}</span></div>
+            <div class="price-split restante-line" style="color:${montoRestante > 0 ? '#ef4444' : '#10b981'}">
+              Restante: $ <span class="restante-val">${montoRestante.toFixed(2)}</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${porcentajePagado}%"></div>
+            </div>
+            <div class="price-split"><span class="pagados-val">${pagadosCount}</span>/<span class="miembros-val">${totalMiembrosViaje}</span> pagaron</div>
+          </div>
+        </td>
+        <td>${a.votos_favor||0}</td>
+        <td>${a.votos_contra||0}</td>
+        <td class="mini">${listEmails || '—'}</td>
+        <td>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;gap:6px">
+              <button class="btn" data-vote1="${a.id}">👍</button>
+              <button class="btn ghost" data-vote0="${a.id}">👎</button>
+            </div>
+            <button class="btn pago ${yaPague ? 'pagado' : ''}" data-pagar="${a.id}" ${yaPague ? 'disabled' : ''}>
+              ${yaPague ? '✓ Pagado' : '💳 Marcar como pagado'}
+            </button>
+            <button class="iconbtn danger" title="Eliminar actividad" data-delact="${a.id}">✖</button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    
+    tbody.querySelectorAll('[data-vote1]').forEach(b=> b.onclick = ()=> votar(Number(b.dataset.vote1), 1));
+    tbody.querySelectorAll('[data-vote0]').forEach(b=> b.onclick = ()=> votar(Number(b.dataset.vote0), 0));
+    tbody.querySelectorAll('[data-delact]').forEach(b=> b.onclick = ()=> deleteActividad(Number(b.dataset.delact)));
+
+    // 🔥 Botón pagar
+    tbody.querySelectorAll('[data-pagar]').forEach(b=>{
+      if (b.disabled) return;
+
+      b.onclick = async () => {
+        const tr = b.closest('tr');
+        const actividadId = Number(b.dataset.pagar);
+        if (b.classList.contains('pagado')) return;
+
+        const precioTotal = Number(tr.dataset.precio || tr.querySelector('.precio-total')?.textContent?.replace(/[^\d.]/g,'') || 0);
+        let perPersona = Number(tr.dataset.perPersona || tr.querySelector('.per-persona')?.textContent || 0);
+        let pagados = Number(tr.dataset.pagados || tr.querySelector('.pagados-val')?.textContent || 0);
+        const totalMiembros = Number(tr.dataset.totalMiembros || tr.querySelector('.miembros-val')?.textContent || 1);
+
+        if (!perPersona || !isFinite(perPersona)) perPersona = totalMiembros > 0 ? (precioTotal / totalMiembros) : precioTotal;
+
+        pagados = pagados + 1;
+        let totalPagado = pagados * perPersona;
+        let restante = Math.max(0, Number((precioTotal - totalPagado).toFixed(2)));
+        let porcentaje = precioTotal > 0 ? Math.min(100, (totalPagado / precioTotal) * 100) : 0;
+
+        tr.dataset.perPersona = String(perPersona);
+        tr.dataset.pagados = String(pagados);
+        tr.dataset.totalMiembros = String(totalMiembros);
+        tr.dataset.precio = String(precioTotal);
+        tr.querySelector('.per-persona').textContent = perPersona.toFixed(2);
+        tr.querySelector('.restante-val').textContent = restante.toFixed(2);
+        tr.querySelector('.pagados-val').textContent = String(pagados);
+        tr.querySelector('.miembros-val').textContent = String(totalMiembros);
+        tr.querySelector('.progress-fill').style.width = `${porcentaje}%`;
+        const restanteLine = tr.querySelector('.restante-line');
+        restanteLine.style.color = restante > 0 ? '#ef4444' : '#10b981';
+
+        b.disabled = true;
+        b.classList.add('pagado');
+        const oldText = b.textContent;
+        b.textContent = '✓ Pagado';
+
+        const { status, data } = await fetchJSON(
+          `${window.API_BASE}/viajes/${currentViaje.id}/actividades/${actividadId}/pagar`,
+          { method:'POST', headers: authHeaders(), body: JSON.stringify({}) }
+        );
+
+        if (status === 200 && data?.ok) {
+          const srvPer = Number(data.per_persona);
+          const srvPag = Number(data.pagados);
+          const srvRes = Number(data.restante);
+          const srvPct = Number(data.porcentaje_pagado);
+          const srvTot = Number(data.total_miembros);
+          const srvPre = Number(data.precio);
+
+          if (Number.isFinite(srvPer))  { perPersona = srvPer;  tr.dataset.perPersona = String(srvPer);  tr.querySelector('.per-persona').textContent = srvPer.toFixed(2); }
+          if (Number.isFinite(srvPag))  { pagados   = srvPag;  tr.dataset.pagados = String(srvPag);     tr.querySelector('.pagados-val').textContent = String(srvPag); }
+          if (Number.isFinite(srvTot))  { tr.dataset.totalMiembros = String(srvTot); tr.querySelector('.miembros-val').textContent = String(srvTot); }
+          if (Number.isFinite(srvPre))  { tr.dataset.precio = String(srvPre); }
+          if (Number.isFinite(srvRes))  { tr.querySelector('.restante-val').textContent = srvRes.toFixed(2); restanteLine.style.color = srvRes > 0 ? '#ef4444' : '#10b981'; }
+          if (Number.isFinite(srvPct))  { tr.querySelector('.progress-fill').style.width = `${srvPct}%`; }
+
+          showToast('Pago registrado ✅');
+          await cargarResumenViaje();
+        } else {
+          pagados = Math.max(0, pagados - 1);
+          totalPagado = pagados * perPersona;
+          restante = Math.max(0, Number((precioTotal - totalPagado).toFixed(2)));
+          porcentaje = precioTotal > 0 ? Math.min(100, (totalPagado / precioTotal) * 100) : 0;
+
+          tr.dataset.pagados = String(pagados);
+          tr.querySelector('.pagados-val').textContent = String(pagados);
+          tr.querySelector('.restante-val').textContent = restante.toFixed(2);
+          tr.querySelector('.progress-fill').style.width = `${porcentaje}%`;
+          restanteLine.style.color = restante > 0 ? '#ef4444' : '#10b981';
+
+          b.disabled = false;
+          b.classList.remove('pagado');
+          b.textContent = oldText;
+
+          showToast((data && data.error) || 'No se pudo registrar el pago', 'err');
+        }
+      };
+    });
+
+    await cargarResumenViaje();
+  }
+
+  // ⛳️ Crear actividad
+  async function crearActividad(){
+    if (!currentViaje) return;
+    const nombre = ($('#actNombre').value || '').trim();
+    const precioStr = ($('#actPrecio').value || '').trim();
+    const precio = precioStr ? Number(precioStr) : 0;
+    const fi = $('#aDesde').value;
+    const ff = $('#aHasta').value;
+
+    if (!nombre) { showToast('Actividad sin nombre', 'err'); $('#actNombre').focus(); return; }
+    if (isNaN(precio) || precio < 0) { showToast('Precio inválido', 'err'); $('#actPrecio').focus(); return; }
+    if (!fi || !ff) { showToast('Elegí fechas de la actividad', 'err'); return; }
+    if (fi > ff) { showToast('La fecha inicial de actividad no puede ser mayor que la final', 'err'); return; }
+
+    const { status, data } = await fetchJSON(`${window.API_BASE}/viajes/${currentViaje.id}/actividades`, {
+      method:'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ nombre, precio, fecha_inicio: fi, fecha_fin: ff })
+    });
+    if (status===200 && data?.ok){
+      $('#actNombre').value=''; $('#actPrecio').value=''; $('#aDesde').value=''; $('#aHasta').value='';
+      showToast('Actividad creada ✅');
+      await cargarActividades();
+    } else showToast(data?.error || 'Error al crear', 'err');
+  }
+
+  // ⛳️ Eliminar actividad
+  async function deleteActividad(actividadId){
+    if (!currentViaje) return;
+    if (!confirm('¿Eliminar esta actividad?')) return;
+    const { status, data } = await fetchJSON(`${window.API_BASE}/viajes/${currentViaje.id}/actividades`, {
+      method:'POST', headers: authHeaders(), body: JSON.stringify({ delete_id: actividadId })
+    });
+    if (status===200 && data?.ok){
+      showToast('Actividad eliminada');
+      await cargarActividades();
+    }
+    else showToast(data?.error || 'No se pudo eliminar', 'err');
+  }
+
+  // ⛳️ Votar
+  async function votar(actividadId, voto){
+    const { status, data } = await fetchJSON(`${window.API_BASE}/viajes/${currentViaje.id}/actividades/${actividadId}/votar`, {
+      method:'POST', headers: authHeaders(), body: JSON.stringify({ voto })
+    });
+    if (status===200 && data?.ok){
+      showToast('Voto registrado ✅');
+      await cargarActividades();
+    }
+    else showToast(data?.error || 'No se pudo votar', 'err');
+  }
+
+  // ⛳️ Eventos UI
+  document.getElementById('btnGuardar').onclick = guardar;
+  document.getElementById('btnListar').onclick  = listar;
+  document.getElementById('btnUnirse').onclick  = unirse;
+  document.getElementById('btnCrearAct').onclick = crearActividad;
+  const btnAddTodo = document.getElementById('btnAddTodo');
+  if (btnAddTodo) btnAddTodo.onclick = agregarTodo;
+
+  document.getElementById('btnLogout').onclick = () => {
+    try { localStorage.removeItem('idToken'); localStorage.removeItem('accessToken'); } catch {}
+    const url = `${window.COGNITO_DOMAIN}/logout?client_id=${encodeURIComponent(window.COGNITO_CLIENT_ID)}&logout_uri=${encodeURIComponent(window.API_BASE + '/signout')}`;
+    window.location = url;
+  };
+
+  // ⛳️ Primera carga
+  listar();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>TripMate · Ingresar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{--bg:#0a0f1e;--card:#0f172a;--ink:#e5e7eb;--muted:#94a3b8;--primary:#3b82f6;--primary-2:#1d4ed8}
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#0a0f1e,#0b1021);color:var(--ink);font-family:system-ui}
+    .wrap{min-height:100dvh;display:grid;place-items:center;padding:24px}
+    .card{width:min(520px,92vw);background:var(--card);border:1px solid #1f2937;border-radius:18px;padding:28px;box-shadow:0 18px 60px #0006}
+    h1{margin:0 0 8px;font-size:28px} p{margin:0 0 18px;color:var(--muted)}
+    button{display:inline-flex;gap:10px;align-items:center;background:var(--primary);border:none;color:#fff;padding:12px 16px;border-radius:12px;font-weight:700;cursor:pointer}
+    button:hover{background:var(--primary-2)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>TripMate</h1>
+      <p>Iniciá sesión para guardar y ver tus viajes.</p>
+      <button id="login">Iniciar sesión con Cognito</button>
+    </div>
+  </div>
+<script>
+  window.COGNITO_DOMAIN = "${COGNITO_DOMAIN}";
+  window.CLIENT_ID      = "${CLIENT_ID}";
+  window.REDIRECT_URI   = "${REDIRECT_URI}";
+  const SCOPES          = encodeURIComponent('openid email profile');
+
+  document.getElementById('login').onclick = () => {
+    const url = `${window.COGNITO_DOMAIN}/oauth2/authorize?client_id=${encodeURIComponent(window.CLIENT_ID)}&response_type=code&scope=${SCOPES}&redirect_uri=${encodeURIComponent(window.REDIRECT_URI)}`;
+    window.location = url;
+  };
+</script>
+</body>
+</html>

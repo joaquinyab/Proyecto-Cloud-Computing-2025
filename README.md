@@ -47,6 +47,21 @@ En cuanto a la funcionalidad de unirse, otro usuario puede iniciar sesión con u
 
 Si un usuario agrega una nueva actividad o realiza un voto, los demás deben refrescar la página, presionar “Listar viajes” nuevamente y abrir el viaje para ver los cambios actualizados. SIEMPRE QUE SE REFRESCA LA PAGINA HAY QUE PRESIONAR LISTAR VIAJES PARA VOLVER A VERLOS.
 
+FUNCIONALIDADES:
+
+   1)Inicio de sesion con mail y contraseña seguros mediante cognito.
+   2)Crear viajes con sus respectivas fechas de inicio y fin.
+   3)Crear presupuestos por viaje.
+   4)Invitar miembros a viajes mediante codigo de acceso.
+   5)Crear actividades en cada viaje (nombre y fecha).
+   6)Votacion en tiempo real de las actividades de los viajes.
+   7)Presupuesto de actividad (se resta al presupuesto total).
+   8)Aviso por mail cuando se llega al 70% del presupuesto del viaje.
+   9)To-do list por viaje.
+   10)Calculadora de pagos (que miembro debe cuanto en cada viaje).
+   11)Aviso cuando miembro del viaje paga una actividad.
+   12)Aviso cuando miembro del viaje vota.
+   13)Aviso cuando faltan 24hs para pagar la actividad.
 
 
 ## Descripción de módulos
